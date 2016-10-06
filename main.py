@@ -7,8 +7,8 @@ def main():
     root = Tk()
     root.title("ECG Plot emulator")
 
-    app = Application(root, 'data.json')
-    app.on_load()
+    app = Application(root)
+    app.on_load('data.json')
     app.pack(side=TOP, fill=BOTH, expand=True)
 
     def closeWindow(*args):
@@ -17,13 +17,13 @@ def main():
         pass
 
     def submit(*args):
-        app.on_submit()
+        app.on_load()
         pass
 
     root.bind("<Escape>", closeWindow)
     root.protocol("WM_DELETE_WINDOW", closeWindow)
 
-    root.bind("<Return>", submit)
+    # root.bind("<Return>", submit)
 
     root.mainloop()
     pass
