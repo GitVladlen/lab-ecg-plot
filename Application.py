@@ -11,22 +11,44 @@ import json
 
 
 class Application(Frame):
-    def __init__(self, parent, file_name='data.json'):
+    def __init__(self, parent):
         Frame.__init__(self, parent)
-        self.file_name = file_name
         self.rows = ["P", "Q", "R", "S", "ST", "T"]
         self.cols = ["A", "mu", "b1", "b2"]
 
         self.table = SimpleTableInput(self, self.rows, self.cols)
-        self.submit = Button(self, text="Submit", command=self.on_submit)
-        self.save = Button(self, text="Save", command=self.on_save)
         self.table.pack(side="top", fill="both", expand=True)
-        self.submit.pack(side="bottom")
-        self.save.pack(side="bottom")
+
+        control_frame = Frame(parent, padding="3 3 3 3")
+        control_frame.pack(side=BOTTOM, fill=BOTH, expand=True)
+
+        label = Label(control_frame, text="File name (*.json):")
+        label.grid(row=0)
+
+        self.file_name = StringVar()
+
+        ent = Entry(control_frame, textvariable=self.file_name)
+        ent.grid(row=0, column=1)
+        ent.focus_set()
+
+        openfile = Button(control_frame, text="Open", command=self.on_load)
+        openfile.grid(row=0, column=2)
+
+        savefile = Button(control_frame, text="Save", command=self.on_save)
+        savefile.grid(row=0, column=3)
+
+        submit = Button(control_frame, text="Plot ECG", command=self.on_submit)
+        submit.grid(row=0, column=4)
+
+        for child in control_frame.winfo_children():
+            child.grid_configure(padx=3, pady=3)
+            pass
 
     def on_load(self, file_name=None):
         if file_name is None:
-            file_name = self.file_name
+            file_name = self.file_name.get()
+            if file_name == "":
+                return
             pass
         try:
             with open(file_name) as json_data:
@@ -49,6 +71,11 @@ class Application(Frame):
         try:
             data = self.getDataDict()
             print "on_save:", data
+            
+            file_name = self.file_name.get()
+            if file_name == "":
+                file_name = "data.json"
+                pass
 
             with open(self.file_name, 'w') as outfile:
                 json.dump(data, outfile, indent=4, sort_keys=True)
@@ -76,7 +103,7 @@ class Application(Frame):
 
     def plot_ecg(self, F):
         data = self.getDataDict()
-        print data
+        # print data
 
         # t0 = (60 * 1000) / F
         # print t0
@@ -94,12 +121,12 @@ class Application(Frame):
 
             t0 += t2i - t1i
 
-            print "{}: {}".format(wave, t_wave[wave])
+            # print "{}: {}".format(wave, t_wave[wave])
             pass
 
-        print t0
+        # print t0
 
-        t = np.arange(0, t0, 0.1)
+        t = np.arange(-50, t0+50, 0.1)
 
         def get_wave(ti):
             prev_ti = 0
@@ -122,6 +149,10 @@ class Application(Frame):
         def func(ti):
             wave, t_start = get_wave(ti)
 
+            if wave is None:
+                return 0
+                pass
+
             t_rel = ti - t_start
 
             A = data[wave]["A"]
@@ -134,12 +165,15 @@ class Application(Frame):
             else:
                 b = b2
 
-            return A * math.exp(-(t_rel-mu)**2/(2*b))
+            return A * math.exp(-((t_rel-mu)**2)/(2*b**2))
             pass
 
         y = [func(ti) for ti in t]
-
+        ax = plt.axes()
+        ax.axes.get_xaxis().set_visible(False)
+        ax.axes.get_yaxis().set_visible(False)
         plt.plot(t, y)
+        plt.title("ECG")
         plt.show()
         pass
     pass
