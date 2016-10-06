@@ -1,40 +1,29 @@
 from Tkinter import *
-import matplotlib.pyplot as plt
-import numpy as np
+from ttk import *
+
+from Application import Application
 
 def main():
     root = Tk()
+    root.title("ECG Plot emulator")
 
-    F = 70
-    t0 = (60 * 1000) / F
-    A = 5
-    mu = 3
-    b = 3
+    app = Application(root, 'data.json')
+    app.on_load()
+    app.pack(side=TOP, fill=BOTH, expand=True)
 
-    x1 = np.arange(0, 7, 0.1)
-    y1 = A * np.exp(-(x1-mu)**2/(2*b))
-
-    x2 = np.arange(7, 14, 0.1)
-    y2 = A * np.exp(-(x2-mu)**2/(2*b))    
-
-    x = x1 + x2
-    y = y1 + y2
-
-    x = np.arange(0, 7, 0.1)
-    y = A * np.exp(-(x-mu)**2/(2*b))
-    lbl = Label(root, text="F")
-    lbl.pack()
-
-    ent = Entry(root)
-    ent.pack()
-    
-    btn = Button(root, text="Button")
-    def onClick(event):
-        plt.plot(x, y)
-        plt.show()
+    def closeWindow(*args):
+        app.on_close()
+        root.destroy()
         pass
-    btn.bind("<Button-1>", onClick)
-    btn.pack()
+
+    def submit(*args):
+        app.on_submit()
+        pass
+
+    root.bind("<Escape>", closeWindow)
+    root.protocol("WM_DELETE_WINDOW", closeWindow)
+
+    root.bind("<Return>", submit)
 
     root.mainloop()
     pass
