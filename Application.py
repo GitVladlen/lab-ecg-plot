@@ -31,6 +31,7 @@ class Application(Frame):
         try:
             with open(file_name) as json_data:
                 data = json.load(json_data)
+                print "on_load:", data
                 for i_col, col in enumerate(self.cols):
                     for i_row, row in enumerate(self.rows):
                         self.table.set(i_row, i_col, data[row][col])
@@ -46,9 +47,8 @@ class Application(Frame):
 
     def on_save(self):
         try:
-            table_data = self.table.get()
-            data = dict(zip(self.rows, [dict(zip(self.cols, row)) for row in table_data]))
-            print data
+            data = self.getDataDict()
+            print "on_save:", data
 
             with open(self.file_name, 'w') as outfile:
                 json.dump(data, outfile, indent=4, sort_keys=True)
@@ -60,36 +60,86 @@ class Application(Frame):
             pass
         pass
 
+    def getDataDict(self):
+        table_data = self.table.get()
+        return dict(zip(self.rows, [dict(zip(self.cols, row)) for row in table_data]))
+        pass
+
     def on_submit(self):
-        self.plot_ecg(1, 1, 1, 1)
+        self.plot_ecg(70)
         pass
 
     def on_close(self):
-        self.on_save()
+        # self.on_save()
         plt.close()
         pass
 
-    def plot_ecg(self, F, A, mu, b):
-        t0 = (60 * 1000) / F
+    def plot_ecg(self, F):
+        data = self.getDataDict()
+        print data
 
-        t_p = 7
-        t_q = 7
+        # t0 = (60 * 1000) / F
+        # print t0
 
-        t0 = t_p + t_q
+        t0 = 0
+        t_wave = {}
+        for wave in self.rows:
+            mu = data[wave]["mu"]
+            b1 = data[wave]["b1"]
+            b2 = data[wave]["b2"]
 
-        x = np.arange(0, t0, 0.1)
+            t1i = mu - 3 * b1
+            t2i = mu + 3 * b2
+            t_wave[wave] = (t1i, t2i)
 
-        def func(x):
-            if x < t_p:
-                return A * math.exp(-(x-mu)**2/(2*b))
-                pass
+            t0 += t2i - t1i
 
-            return 1.5 * A * math.exp(-(x-t_p-5)**2/(2*b))
+            print "{}: {}".format(wave, t_wave[wave])
             pass
 
-        y = [func(xx) for xx in x]
+        print t0
 
-        plt.plot(x, y)
+        t = np.arange(0, t0, 0.1)
+
+        def get_wave(ti):
+            prev_ti = 0
+            for wave in self.rows:
+                t1i, t2i = t_wave[wave]
+
+                t1i += prev_ti
+                t2i += prev_ti
+
+                if t1i <= ti < t2i:
+                    return wave, t1i
+                    pass
+
+                prev_ti = t2i
+                pass
+
+            return None, None
+            pass
+
+        def func(ti):
+            wave, t_start = get_wave(ti)
+
+            t_rel = ti - t_start
+
+            A = data[wave]["A"]
+            mu = data[wave]["mu"]
+            b1 = data[wave]["b1"]
+            b2 = data[wave]["b2"]
+
+            if t_rel <= mu:
+                b = b1
+            else:
+                b = b2
+
+            return A * math.exp(-(t_rel-mu)**2/(2*b))
+            pass
+
+        y = [func(ti) for ti in t]
+
+        plt.plot(t, y)
         plt.show()
         pass
     pass
