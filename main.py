@@ -5,7 +5,7 @@ from Application import Application
 
 def main():
     root = Tk()
-    root.title("ECG Plot emulator")
+    root.title("ECG Plot")
 
     app = Application(root)
     app.on_load('data.json')
@@ -16,14 +16,8 @@ def main():
         root.destroy()
         pass
 
-    def submit(*args):
-        app.on_load()
-        pass
-
     root.bind("<Escape>", closeWindow)
     root.protocol("WM_DELETE_WINDOW", closeWindow)
-
-    # root.bind("<Return>", submit)
 
     root.mainloop()
     pass
