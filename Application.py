@@ -32,12 +32,15 @@ class Application(Frame):
         ent.focus_set()
 
         openfile = Button(control_frame, text="Open", command=self.on_load)
+        openfile.bind("<Return>", lambda event: self.on_load())
         openfile.grid(row=0, column=2)
 
         savefile = Button(control_frame, text="Save", command=self.on_save)
+        savefile.bind("<Return>", lambda event: self.on_save())
         savefile.grid(row=0, column=3)
 
         submit = Button(control_frame, text="Plot ECG", command=self.on_submit)
+        submit.bind("<Return>", lambda event: self.on_submit())
         submit.grid(row=0, column=4)
 
         for child in control_frame.winfo_children():
