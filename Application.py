@@ -5,6 +5,7 @@ import tkFileDialog
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+import random
 
 from SimpleTableInput import SimpleTableInput
 
@@ -35,7 +36,7 @@ class Application(Frame):
         savefile = Button(control_frame, text="Save", command=self.on_save)
         savefile.bind("<Return>", lambda event: self.on_save())
         savefile.grid(row=0, column=1)
-
+        """ var F controls """
         label = Label(control_frame, text="F:")
         label.grid(row=0, column=2)
 
@@ -44,10 +45,28 @@ class Application(Frame):
 
         ent = Entry(control_frame, textvariable=self.var_f, width=4)
         ent.grid(row=0, column=3)
+        """ var A controls """
+        label = Label(control_frame, text="Noise [%]:")
+        label.grid(row=0, column=4)
+
+        self.var_A = StringVar()
+        self.var_A.set(10)
+
+        ent = Entry(control_frame, textvariable=self.var_A, width=4)
+        ent.grid(row=0, column=5)
+        """ var T controls """
+        label = Label(control_frame, text="Alternation [%]:")
+        label.grid(row=0, column=6)
+
+        self.var_T = StringVar()
+        self.var_T.set(10)
+
+        ent = Entry(control_frame, textvariable=self.var_T, width=4)
+        ent.grid(row=0, column=7)
 
         submit = Button(control_frame, text="Plot ECG", command=self.on_submit)
         submit.bind("<Return>", lambda event: self.on_submit())
-        submit.grid(row=0, column=4)
+        submit.grid(row=0, column=8)
 
         for child in control_frame.winfo_children():
             child.grid_configure(padx=3, pady=3)
@@ -125,26 +144,38 @@ class Application(Frame):
 
     def on_submit(self):
         F = int(self.var_f.get())
-        self.plot_ecg(F)
+        A = int(self.var_A.get())
+        T = int(self.var_T.get())
+
+        self.plot_ecg(F, A, T, 10)
         pass
 
     def on_close(self):
         plt.close()
         pass
 
-    def plot_ecg(self, F):
+    def plot_ecg(self, F, A_range_T_wave, mu_range_T_wave, cycles):
         plt.close()
 
         data = self.getDataDict()
 
         coef = (60 * 1000) / F
 
-        def func(ti):
+        A_range_R_wave = 10
+
+        def func(ti, R_wave_A_coef, T_wave_A_coef, T_wave_mu_coef):
             sum = 0
+
             for wave in self.rows:
                 A = data[wave]["A"] * coef
                 mu = data[wave]["mu"] * coef
-                b = data[wave]["b1" if ti <= mu else "b2"]  * coef
+                b = data[wave]["b1" if ti <= mu else "b2"] * coef
+
+                if wave == "R":
+                    A += A * R_wave_A_coef
+                elif wave == "T":
+                    A += A * T_wave_A_coef
+                    mu += mu * T_wave_mu_coef
 
                 numerator = (ti-mu)**2
                 denominator = -2 * b**2
@@ -152,14 +183,16 @@ class Application(Frame):
             return sum
 
         t = np.arange(0, coef, 1)
-        y = [func(ti) for ti in t]
-       
-        offset = 0
 
-        for i in range(5):
-            x = [ti + offset for ti in t]
-            plt.plot(x, y)
-            offset += coef
+        for cycle in range(cycles):
+            R_wave_A_coef = random.randint(-A_range_R_wave, A_range_R_wave) / 100.0
+            T_wave_A_coef = random.randint(-A_range_T_wave, A_range_T_wave) / 100.0
+            T_wave_mu_coef = random.randint(-mu_range_T_wave, mu_range_T_wave) / 100.0
+
+            y = [func(ti, R_wave_A_coef, T_wave_A_coef, T_wave_mu_coef) for ti in t]
+            x = [ti + cycle * coef for ti in t]
+
+            plt.plot(x, y, 'b-')
             pass
 
         plt.title("ECG")
