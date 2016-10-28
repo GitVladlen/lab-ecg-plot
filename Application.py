@@ -153,14 +153,8 @@ class Application(Frame):
 
         t = np.arange(0, coef, 1)
         y = [func(ti) for ti in t]
-       
-        offset = 0
 
-        for i in range(5):
-            x = [ti + offset for ti in t]
-            plt.plot(x, y)
-            offset += coef
-            pass
+        plt.plot(t, y, "b-")
 
         plt.title("ECG")
         plt.show()
