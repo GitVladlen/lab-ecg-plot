@@ -1,5 +1,5 @@
-from Tkinter import *
-from ttk import *
+from tkinter import *
+from tkinter.ttk import *
 
 class SimpleTableInput(Frame):
     def __init__(self, parent, rows, columns):

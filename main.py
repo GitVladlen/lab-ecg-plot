@@ -1,5 +1,4 @@
-from Tkinter import *
-from ttk import *
+from tkinter import *
 
 from Application import Application
 
