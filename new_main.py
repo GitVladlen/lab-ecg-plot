@@ -213,7 +213,7 @@ for param_key, param_name in zip(param_keys, param_names):
                   orient=tkinter.HORIZONTAL,
                   length=400,
                   showvalue=1,
-                  tickinterval=0.05,
+                  tickinterval=0.5,
                   resolution=0.005,
                   command=on_update_var,
                   variable=param_var).pack()
