@@ -1,6 +1,6 @@
-from Tkinter import *
-from ttk import *
-import tkFileDialog
+from tkinter import *
+from tkinter.ttk import *
+from tkinter import filedialog
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -96,13 +96,13 @@ class Application(Frame):
     def on_load(self, file_name=None):
         try:
             if file_name is None:
-                file_name = tkFileDialog.askopenfilename(**self.file_open_opt)
+                file_name = filedialog.askopenfilename(**self.file_open_opt)
             if file_name is None:
                 return
 
             with open(file_name) as json_data:
                 data = json.load(json_data)
-                print "on_load filename={}:\n{}".format(file_name, data)
+                print ("on_load filename={}:\n{}".format(file_name, data))
 
                 for i_col, col in enumerate(self.cols):
                     for i_row, row in enumerate(self.rows):
@@ -112,7 +112,7 @@ class Application(Frame):
                 pass
             pass
         except Exception as exception:
-            print "Exception {}: {}".format(type(exception), exception)
+            print ("Exception {}: {}".format(type(exception), exception))
             return
             pass
         pass
@@ -120,19 +120,19 @@ class Application(Frame):
     def on_save(self, file_name=None):
         try:
             if file_name is None:
-                file_name = tkFileDialog.asksaveasfilename(**self.file_save_opt)
+                file_name = filedialog.asksaveasfilename(**self.file_save_opt)
             if file_name is None:
                 return
 
             data = self.getDataDict()
-            print "on_save filename={}:\n{}".format(file_name, data)
+            print ("on_save filename={}:\n{}".format(file_name, data))
 
             with open(file_name, 'w') as outfile:
                 json.dump(data, outfile, indent=4, sort_keys=True)
                 pass
             pass
         except Exception as exception:
-            print "Exception {}: {}".format(type(exception), exception)
+            print ("Exception {}: {}".format(type(exception), exception))
             return
             pass
         pass
