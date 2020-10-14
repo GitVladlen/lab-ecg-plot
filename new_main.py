@@ -1,7 +1,7 @@
 import tkinter
 from tkinter import filedialog
 import json
-
+import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
@@ -193,6 +193,7 @@ def on_update_var(*args):
     canvas.draw()
     pass
 
+
 label_frame_params = tkinter.LabelFrame(controll_pane, text="Параметры модели")
 label_frame_params.pack(padx=5)
 
@@ -236,7 +237,7 @@ for val in tooth_keys:
                         value=val).pack()
 
 label_frame_f = tkinter.LabelFrame(controll_pane, text="Чсс, уд./мин")
-label_frame_f.pack(fill="both", expand="yes", padx=5, pady=5, side=tkinter.LEFT)
+label_frame_f.pack(fill="both", expand="yes", padx=5, pady=5)
 
 tkinter.Label(label_frame_f,
               text="F = ").pack(side=tkinter.LEFT, padx=5, pady=5)
@@ -259,5 +260,101 @@ tkinter.Button(label_frame_f,
 tkinter.Button(label_frame_f,
                text="Открыть",
                command=on_load).pack(side=tkinter.RIGHT, padx=5, pady=5)
+
+########################################
+label_frame_gen = tkinter.LabelFrame(controll_pane, text="Генерация")
+label_frame_gen.pack(fill="both", expand="yes", padx=5, pady=5)
+
+gen_top_pane = tkinter.PanedWindow(label_frame_gen)
+gen_top_pane.pack(side=tkinter.TOP)
+
+cycles_var = tkinter.StringVar()
+cycles_var.set("30")
+
+
+def on_generate():
+    plt.close()
+
+    cycles = int(cycles_var.get())
+    for cycle in range(cycles):
+        plt.plot(t + cycle, fi(t), "b-", label='linear')
+
+    plt.title("Сгенерированная ЭКГ")
+    plt.show()
+
+
+def on_cycle_down():
+    cycles = int(cycles_var.get())
+    cycles = cycles - 1 if cycles - 1 >= 1 else 1
+    cycles_var.set(str(cycles))
+
+
+def on_cycle_up():
+    cycles = int(cycles_var.get())
+    cycles = cycles + 1 if cycles + 1 <= 100 else 100
+    cycles_var.set(str(cycles))
+
+
+tkinter.Label(gen_top_pane,
+              text="К-во циклов:").pack(side=tkinter.LEFT, padx=5, pady=5)
+
+tkinter.Button(gen_top_pane,
+               text="<",
+               command=on_cycle_down).pack(side=tkinter.LEFT, padx=5, pady=5)
+
+cycle_ent = tkinter.Entry(gen_top_pane,
+                          width=5,
+                          justify=tkinter.LEFT,
+                          textvariable=cycles_var).pack(side=tkinter.LEFT)
+
+tkinter.Button(gen_top_pane,
+               text=">",
+               command=on_cycle_up).pack(side=tkinter.LEFT, padx=5, pady=5)
+
+tkinter.Button(gen_top_pane,
+               text="Генерация",
+               command=on_generate).pack(side=tkinter.RIGHT, padx=5, pady=5)
+
+gen_middle_pane = tkinter.PanedWindow(label_frame_gen)
+gen_middle_pane.pack(side=tkinter.TOP)
+
+alt_r_var = tkinter.DoubleVar()
+
+alt_r_frame_scale = tkinter.LabelFrame(gen_middle_pane,
+                                       text="Уровень альтернации Т")
+alt_r_frame_scale.pack(side=tkinter.LEFT, padx=5, pady=5)
+
+tkinter.Scale(alt_r_frame_scale,
+              from_=0.0,
+              to=1.0,
+              orient=tkinter.HORIZONTAL,
+              length=220,
+              showvalue=1,
+              tickinterval=0.5,
+              resolution=0.005,
+              command=on_update_var,
+              variable=alt_r_var).pack()
+
+alt_r_var.set(1)
+########################################
+
+noise_level_var = tkinter.DoubleVar()
+
+noise_level_frame_scale = tkinter.LabelFrame(gen_middle_pane,
+                                             text="Уровень шума")
+noise_level_frame_scale.pack(side=tkinter.RIGHT, padx=5, pady=5)
+
+tkinter.Scale(noise_level_frame_scale,
+              from_=0.0,
+              to=1.0,
+              orient=tkinter.HORIZONTAL,
+              length=220,
+              showvalue=1,
+              tickinterval=0.5,
+              resolution=0.005,
+              command=on_update_var,
+              variable=noise_level_var).pack()
+
+noise_level_var.set(1)
 
 tkinter.mainloop()
