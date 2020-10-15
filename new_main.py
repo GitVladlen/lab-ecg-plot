@@ -4,7 +4,7 @@ import json
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-
+import random
 import numpy as np
 
 # init data
@@ -45,7 +45,9 @@ holder = {
             "b1": 0.05,
             "b2": 0.05,
             "mu": 0.7
-        }
+        },
+        "Alter": 1.0,
+        "Noise": 1.0
     }
 }
 
@@ -54,8 +56,12 @@ tooth_keys = ["P", "Q", "R", "S", "ST", "T"]
 param_keys = ["A", "mu", "b1", "b2"]
 
 # ecg model func
-def fi(t):
+def fi(t, alter=False):
     result = 0
+
+    Alter = holder["data"]["Alter"]
+    Noise = holder["data"]["Noise"]
+
     for tooth_key in tooth_keys:
         A = holder["data"][tooth_key]["A"]
         mu = holder["data"][tooth_key]["mu"]
@@ -63,9 +69,15 @@ def fi(t):
         b1 = holder["data"][tooth_key]["b1"]
         b2 = holder["data"][tooth_key]["b2"]
 
+        if tooth_key == "T" and alter is  True:
+            A = A + Alter
+
         b = np.where(t <= mu, b1, b2)
 
-        result += A * np.exp(-(((t - mu) ** 2) / (2 * b ** 2)))
+        noise = np.array([random.random() * Noise for _ in range(len(t))])
+
+        result += A * np.exp(-(((t - mu) ** 2) / (2 * b ** 2))) + noise
+
     return result
 
 
@@ -110,6 +122,9 @@ def on_load(file_name=None, update=True):
             for tooth_key in tooth_keys:
                 for param_key in param_keys:
                     holder["data"][tooth_key][param_key] = load_data[tooth_key][param_key]
+
+            holder["data"]["Alter"] = load_data["Alter"]
+            holder["data"]["Noise"] = load_data["Noise"]
             print(("on_load filename={}:\n{}".format(file_name, holder["data"])))
             pass
         pass
@@ -151,6 +166,7 @@ ecg_plot, = sub_plot.plot(t, fi(t), 'b')
 
 sub_plot.set_ylabel('Напряжение (мВ)')
 sub_plot.set_xlabel('Время (с)')
+sub_plot.set_ylim([-0.5, 1.5])
 
 canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
 canvas.draw()
@@ -171,6 +187,8 @@ F_var.set("60")
 controll_pane = tkinter.PanedWindow(root)
 controll_pane.pack(side=tkinter.RIGHT)
 
+show_alter_var = tkinter.IntVar()
+show_alter_var.set(0)
 
 def choose_tooth(*args):
     tooth_key = tooth.get()
@@ -189,7 +207,11 @@ def on_update_var(*args):
     for param_key in param_keys:
         tooth_data[param_key] = param_vars[param_key].get()
 
-    ecg_plot.set_ydata(fi(t))
+    holder["data"]["Alter"] = param_vars["Alter"].get()
+    holder["data"]["Noise"] = param_vars["Noise"].get()
+
+    ecg_plot.set_xdata(t)
+    ecg_plot.set_ydata(fi(t, show_alter_var.get() == 1))
     canvas.draw()
     pass
 
@@ -277,7 +299,9 @@ def on_generate():
 
     cycles = int(cycles_var.get())
     for cycle in range(cycles):
-        plt.plot(t + cycle, fi(t), "b-", label='linear')
+        plt.plot(t + cycle, fi(t, cycle % 2 == 0), "b-", label='linear')
+        axes = plt.gca()
+        axes.set_ylim([-0.5, 1.5])
 
     plt.title("Сгенерированная ЭКГ")
     plt.show()
@@ -315,6 +339,11 @@ tkinter.Button(gen_top_pane,
                text="Генерация",
                command=on_generate).pack(side=tkinter.RIGHT, padx=5, pady=5)
 
+tkinter.Checkbutton(gen_top_pane,
+                    text="Показать альтернацию Т",
+                    variable=show_alter_var,
+                    command=on_update_var).pack(side=tkinter.RIGHT, padx=5, pady=5)
+
 gen_middle_pane = tkinter.PanedWindow(label_frame_gen)
 gen_middle_pane.pack(side=tkinter.TOP)
 
@@ -335,7 +364,11 @@ tkinter.Scale(alt_r_frame_scale,
               command=on_update_var,
               variable=alt_r_var).pack()
 
-alt_r_var.set(1)
+alt_r_value = holder["data"]["Alter"]
+alt_r_var.set(alt_r_value)
+
+param_vars["Alter"] = alt_r_var
+
 ########################################
 
 noise_level_var = tkinter.DoubleVar()
@@ -355,6 +388,9 @@ tkinter.Scale(noise_level_frame_scale,
               command=on_update_var,
               variable=noise_level_var).pack()
 
-noise_level_var.set(1)
+noise_level_value = holder["data"]["Noise"]
+noise_level_var.set(noise_level_value)
+
+param_vars["Noise"] = noise_level_var
 
 tkinter.mainloop()
