@@ -12,9 +12,10 @@ with open('ЕКГ_КП5.txt', 'r') as reader:
 def calc_alpha_data(alpha_, data_):
     new_data_ = []
     for k in range(len(data_)):
-        z_tilda_prev = 0
         if k-1 >= 0:
             z_tilda_prev = new_data_[k-1]
+        else:
+            z_tilda_prev = data_[0]
         z_tilda = z_tilda_prev + alpha_*(data_[k] - z_tilda_prev)
 
         new_data_.append(z_tilda)
@@ -27,12 +28,14 @@ def calc_window_data(window_, data_):
     new_data_ = []
     lamb = 1 / window_
     for k in range(len(data_)):
-        z_prev = 0
         if k-1 >= 0:
             z_prev = new_data_[k-1]
-        z_window = 0
+        else:
+            z_prev = data_[0]
         if k-window_ >= 0:
             z_window = data_[k - window_]
+        else:
+            z_window = data[0]
 
         z = z_prev + lamb*(data_[k]-z_window)
 
@@ -44,17 +47,21 @@ def calc_window_data_2(window_, data_):
     if window_ == 0:
         return data_
     new_data_ = []
-    mu = 1 / (1+2*window_)
+    mu = 1/(2*window_ + 1)
     for k in range(len(data_)):
-        z_tilda_prev = 0
         if k-1 >= 0:
             z_tilda_prev = new_data_[k-1]
-        z_next = 0
+        else:
+            z_tilda_prev = data_[0]
         if k+window_ < len(data_):
             z_next = data_[k+window_]
-        z_prev = 0
+        else:
+            z_next = data[-1]
+
         if k-1-window_ >= 0:
             z_prev = data_[k-1-window_]
+        else:
+            z_prev = data[0]
 
         z_tilda = z_tilda_prev + mu*(z_next-z_prev)
 
@@ -74,17 +81,17 @@ def calc_adaptive_window_data(window_, h_, data_):
                 mu = 1 / (2 * Wk_i + 1)
                 summa = 0
                 for j in range(-Wk_i, Wk_i+1):
-                    z_k_minus_j = 0
-                    if 0 <= k-j < len(data_):
+                    if k-j < 0:
+                        z_k_minus_j = data[0]
+                    elif k-j >= len(data_):
+                        z_k_minus_j = data[-1]
+                    else:
                         z_k_minus_j = data_[k-j]
                     summa += z_k_minus_j
-                z_tilda_i = mu * summa
-                if abs(z_tilda_i-data_[k]) <= h_:
-                    z_tilda = z_tilda_i
-                    Wk = Wk_i
+                z_tilda = mu * summa
+                Wk = Wk_i
+                if abs(z_tilda-data_[k]) <= h_:
                     break
-        if z_tilda == 0:
-            z_tilda = data[k]
         new_data_.append(z_tilda)
     return new_data_
 
@@ -226,7 +233,7 @@ tkinter.Radiobutton(label_frame_params,
                     command=update_plot).pack(anchor=tkinter.W)
 
 tkinter.Radiobutton(label_frame_params,
-                    text="Адаптивное сглаживание:\nz'[k]=1/(2*Wk+1) * sum[j=-Wk...Wk](z[k-j]), Wk<=W0, |z'[k]-z[k]<=h0|, |Wk-W0|<=1",
+                    text="Адаптивное сглаживание:\nz'[k]=1/(2*Wk+1) * sum[j=-Wk...Wk](z[k-j]), Wk<=W0, |z'[k]-z[k]|<=h0, |Wk-W0|<=1",
                     variable=var_mode,
                     value=5,
                     justify=tkinter.LEFT,
